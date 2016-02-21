@@ -1,4 +1,5 @@
-%global pkg_name google-guice
+%global short_name guice
+%global pkg_name google-%{short_name}
 %{?scl:%scl_package %{pkg_name}}
 %{?maven_find_provides_and_requires}
 
@@ -6,33 +7,39 @@
 %bcond_without extensions
 %endif
 
-%global short_name guice
-
 Name:           %{?scl_prefix}%{pkg_name}
-Version:        3.1.3
-Release:        9.13%{?dist}
+Version:        4.0
+Release:        2.1%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
-URL:            https://github.com/sonatype/sisu-%{short_name}
+URL:            https://github.com/google/%{short_name}
+BuildArch:      noarch
+
 # ./create-tarball.sh %%{version}
 Source0:        %{pkg_name}-%{version}.tar.xz
 Source1:        create-tarball.sh
-BuildArch:      noarch
+
+Patch0:         0001-Revert-Some-work-on-issue-910-ensure-that-anonymous-.patch
+
+# Rejected upstream: https://github.com/google/guice/issues/492
+Patch100:       https://raw.githubusercontent.com/sonatype/sisu-guice/master/PATCHES/GUICE_492_slf4j_logger_injection.patch
+# Forwarded upstream: https://github.com/google/guice/issues/618
+Patch101:       https://raw.githubusercontent.com/sonatype/sisu-guice/master/PATCHES/GUICE_618_extensible_filter_pipeline.patch
 
 BuildRequires:  %{?scl_prefix_java_common}maven-local >= 3.2.4-2
 BuildRequires:  %{?scl_prefix}maven-remote-resources-plugin
 BuildRequires:  %{?scl_prefix}munge-maven-plugin
+BuildRequires:  %{?scl_prefix}maven-gpg-plugin
 BuildRequires:  %{?scl_prefix}apache-resource-bundles
 BuildRequires:  %{?scl_prefix}aopalliance
 BuildRequires:  %{?scl_prefix_java_common}atinject
-BuildRequires:  %{?scl_prefix}cglib
+BuildRequires:  %{?scl_prefix_java_common}cglib
 BuildRequires:  %{?scl_prefix_java_common}guava
-BuildRequires:  %{?scl_prefix_java_common}slf4j-api
+BuildRequires:  %{?scl_prefix_java_common}slf4j
 
 %if %{with extensions}
-buildrequires:  %{?scl_prefix}hibernate-jpa-2.0-api
+BuildRequires:  %{?scl_prefix}hibernate-jpa-2.0-api
 BuildRequires:  %{?scl_prefix}springframework-beans
-BuildRequires:  %{?scl_prefix_java_common}tomcat-servlet-3.0-api
 %endif
 
 # Test dependencies:
@@ -45,9 +52,7 @@ BuildRequires:  %{?scl_prefix_java_common}felix-framework
 BuildRequires:  %{?scl_prefix}hibernate3-entitymanager
 BuildRequires:  %{?scl_prefix}mvn(org.hsqldb:hsqldb-j5)
 BuildRequires:  %{?scl_prefix}testng
-BuildRequires:  %{?scl_prefix_java_common}slf4j-simple
 %endif
-
 
 %description
 Put simply, Guice alleviates the need for factories and the use of new
@@ -74,6 +79,13 @@ Summary:        Guice parent POM
 %description -n %{?scl_prefix}%{short_name}-parent
 Guice is a lightweight dependency injection framework for Java 5
 and above. This package provides parent POM for Guice modules.
+
+%package -n %{?scl_prefix}%{short_name}-servlet
+Summary:        Servlet extension module for Guice
+
+%description -n %{?scl_prefix}%{short_name}-servlet
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides Servlet module for Guice.
 
 %if %{with extensions}
 
@@ -126,19 +138,19 @@ Summary:        Persist extension module for Guice
 Guice is a lightweight dependency injection framework for Java 5
 and above. This package provides Persist module for Guice.
 
-%package -n %{?scl_prefix}%{short_name}-servlet
-Summary:        Servlet extension module for Guice
-
-%description -n %{?scl_prefix}%{short_name}-servlet
-Guice is a lightweight dependency injection framework for Java 5
-and above. This package provides Servlet module for Guice.
-
 %package -n %{?scl_prefix}%{short_name}-spring
 Summary:        Spring extension module for Guice
 
 %description -n %{?scl_prefix}%{short_name}-spring
 Guice is a lightweight dependency injection framework for Java 5
 and above. This package provides Spring module for Guice.
+
+%package -n %{?scl_prefix}%{short_name}-testlib
+Summary:        TestLib extension module for Guice
+
+%description -n %{?scl_prefix}%{short_name}-testlib
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides TestLib module for Guice.
 
 %package -n %{?scl_prefix}%{short_name}-throwingproviders
 Summary:        ThrowingProviders extension module for Guice
@@ -149,6 +161,13 @@ and above. This package provides ThrowingProviders module for Guice.
 
 %endif # with extensions
 
+%package -n %{?scl_prefix}%{short_name}-bom
+Summary:        Bill of Materials for Guice
+
+%description -n %{?scl_prefix}%{short_name}-bom
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides Bill of Materials module for Guice.
+
 %package javadoc
 Summary:        API documentation for Guice
 
@@ -158,11 +177,16 @@ This package provides %{summary}.
 
 %prep
 %setup -q -n %{pkg_name}-%{version}
+%patch0 -p1
+%patch100 -p1
+%patch101 -p1
 %{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 
 # We don't have struts2 in Fedora yet.
 %pom_disable_module struts2 extensions
+# Android-specific extension
+%pom_disable_module dagger-adapter extensions
 
 # Remove additional build profiles, which we don't use anyways
 # and which are only pulling additional dependencies.
@@ -176,37 +200,33 @@ set -e -x
 # maven-javadoc-plugin to generate javadocs with default style.
 %pom_remove_plugin :maven-javadoc-plugin
 
-%pom_remove_dep javax.persistence:persistence-api extensions/persist
-%pom_add_dep org.hibernate.javax.persistence:hibernate-jpa-2.0-api extensions/persist
-
 # remove test dependency to make sure we don't produce requires
 # see #1007498
+%pom_remove_dep :guava-testlib extensions
 %pom_xpath_remove "pom:dependency[pom:classifier[text()='tests']]" extensions
+
+%pom_remove_parent
+%pom_set_parent com.google.inject:guice-parent:%{version} jdk8-tests
 
 # Don't try to build extension modules unless they are needed
 %if %{without extensions}
-%pom_disable_module extensions
+sed -i '/<module>/s|extensions|&/servlet|' pom.xml
 %endif
 
-# Upstream doesn't generate pom.properties, but we need it.
-sed -i "/<addMavenDescriptor>/d" pom.xml
+%mvn_package :jdk8-tests __noinstall
 %{?scl:EOF}
-
 
 %build
 %{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
-%if %{with extensions}
-%mvn_alias ":guice-{assistedinject,grapher,jmx,jndi,multibindings,persist,\
-servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
-%endif # with extensions
+%mvn_alias "com.google.inject.extensions:" "org.sonatype.sisu.inject:"
 
-%mvn_package :::no_aop: sisu-guice
+%mvn_package :::no_aop: guice
 
 %mvn_file  ":guice-{*}"  %{short_name}/guice-@1
-%mvn_file  ":sisu-guice" %{short_name}/%{pkg_name} %{pkg_name}
-%mvn_alias ":sisu-guice" "com.google.inject:guice"
-# Skip tests because of missing dependency (hsqldb-j5).
+%mvn_file  ":guice" %{short_name}/%{pkg_name} %{pkg_name}
+%mvn_alias ":guice" "org.sonatype.sisu:sisu-guice"
+# Skip tests because of missing dependency guice-testlib
 %mvn_build -f -s
 %{?scl:EOF}
 
@@ -216,87 +236,105 @@ set -e -x
 %mvn_install
 %{?scl:EOF}
 
-%files -f .mfiles-sisu-guice
-%dir %{_mavenpomdir}/%{short_name}
+%files -f .mfiles-guice
 %dir %{_javadir}/%{short_name}
 
 %files -n %{?scl_prefix}%{short_name}-parent -f .mfiles-guice-parent
 %doc COPYING
 
+%files -n %{?scl_prefix}%{short_name}-servlet -f .mfiles-guice-servlet
+
 %if %{with extensions}
 %files -n %{?scl_prefix}%{short_name}-assistedinject -f .mfiles-guice-assistedinject
-%files -n %{?scl_prefix}%{short_name}-extensions -f .mfiles-guice-extensions
+%files -n %{?scl_prefix}%{short_name}-extensions -f .mfiles-extensions-parent
 %files -n %{?scl_prefix}%{short_name}-grapher -f .mfiles-guice-grapher
 %files -n %{?scl_prefix}%{short_name}-jmx -f .mfiles-guice-jmx
 %files -n %{?scl_prefix}%{short_name}-jndi -f .mfiles-guice-jndi
 %files -n %{?scl_prefix}%{short_name}-multibindings -f .mfiles-guice-multibindings
 %files -n %{?scl_prefix}%{short_name}-persist -f .mfiles-guice-persist
-%files -n %{?scl_prefix}%{short_name}-servlet -f .mfiles-guice-servlet
 %files -n %{?scl_prefix}%{short_name}-spring -f .mfiles-guice-spring
+%files -n %{?scl_prefix}%{short_name}-testlib -f .mfiles-guice-testlib
 %files -n %{?scl_prefix}%{short_name}-throwingproviders -f .mfiles-guice-throwingproviders
 %endif # with extensions
+
+%files -n %{?scl_prefix}%{short_name}-bom -f .mfiles-guice-bom
 
 %files javadoc -f .mfiles-javadoc
 %doc COPYING
 
 
 %changelog
-* Mon Jan 11 2016 Michal Srb <msrb@redhat.com> - 3.1.3-9.13
-- maven33 rebuild #2
+* Tue Jan 12 2016 Mikolaj Izdebski <mizdebsk@redhat.com> - 4.0-2.1
+- SCL-ize package
+- Unconditionally enable servlet extension
 
-* Sat Jan 09 2016 Michal Srb <msrb@redhat.com> - 3.1.3-9.12
-- maven33 rebuild
+* Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
-* Thu Jan 15 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9.11
-- Add directory ownership on %%{_mavenpomdir} subdir
+* Thu May 14 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 4.0-1
+- Update to upstream version 4.0
 
-* Tue Jan 13 2015 Michael Simacek <msimacek@redhat.com> - 3.1.3-9.10
-- Mass rebuild 2015-01-13
+* Mon Apr 27 2015 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.6-1
+- Update to upstream version 3.2.6
 
-* Mon Jan 12 2015 Michael Simacek <msimacek@redhat.com> - 3.1.3-9.9
-- Rebuild to regenerate requires from java-common
+* Fri Mar 6 2015 Alexander Kurtakov <akurtako@redhat.com> 3.2.5-2
+- Drop gone tomcat-servlet-3.0-api BR, builds fine without it.
 
-* Tue Jan 06 2015 Michael Simacek <msimacek@redhat.com> - 3.1.3-9.8
-- Mass rebuild 2015-01-06
+* Fri Jan 23 2015 Michael Simacek <msimacek@redhat.com> - 3.2.5-1
+- Update to upstream version 3.2.5
 
-* Mon May 26 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9.7
-- Mass rebuild 2014-05-26
+* Mon Sep 29 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.4-1
+- Update to upstream version 3.2.4
 
-* Fri Feb 28 2014 Michael Simacek <msimacek@redhat.com> - 3.1.3-9.6
-- Update slf4j BR
+* Fri Jun  6 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.2-1
+- Update to upstream version 3.2.2
 
-* Wed Feb 19 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9.5
-- Mass rebuild 2014-02-19
+* Wed May 28 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.1-2
+- Rebuild to regenerate Maven auto-requires
 
-* Tue Feb 18 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9.4
-- Mass rebuild 2014-02-18
+* Wed Apr 16 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.1-1
+- Update to upstream version 3.2.1
+- Add testlib subpackage
 
-* Mon Feb 17 2014 Michal Srb <msrb@redhat.com> - 3.1.3-9.3
-- SCL-ize BR/R
+* Tue Mar  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.10-3
+- Fix directory ownership
 
-* Thu Feb 13 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9.2
-- Rebuild to regenerate auto-requires
+* Tue Mar 04 2014 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.1.10-3
+- Use Requires: java-headless rebuild (#1067528)
 
-* Tue Feb 11 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9.1
-- First maven30 software collection build
+* Wed Feb 19 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.10-2
+- Fix unowned directory
 
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 3.1.3-9
-- Mass rebuild 2013-12-27
+* Tue Feb 18 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.10-1
+- Update to upstream version 3.1.10
+
+* Mon Jan 20 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.9-1
+- Update to upstream version 3.1.9
+
+* Mon Nov 11 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.8-1
+- Update to upstream version 3.1.8
+
+* Wed Oct 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-10
+- Rebuild to regenerate broken POMs
+- Related: rhbz#1021484
+
+* Fri Oct 18 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9
+- Don't force generation of pom.properties
 
 * Wed Sep 25 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-8
 - Install no_aop artifact after javapackages update
 
 * Thu Sep 12 2013 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.1.3-7
 - Remove dependency on tests from runtime
-- Rel: rhbz#1007498
+- Related: rhbz#1007498
 
 * Tue Sep 10 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-6
 - Install no_aop artifact
-- Res: rhbz#1006491
+- Resolves: rhbz#1006491
 
 * Wed Sep  4 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-5
 - Enable pom.properties
-- Res: rhbz#1004360
+- Resolves: rhbz#1004360
 
 * Wed Aug 07 2013 Michal Srb <msrb@redhat.com> - 3.1.3-4
 - Add create-tarball.sh script to SRPM
