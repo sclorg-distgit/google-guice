@@ -10,7 +10,7 @@
 
 Name:           %{?scl_prefix}%{pkg_name}
 Version:        3.1.3
-Release:        9.12%{?dist}
+Release:        9.13%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/sonatype/sisu-%{short_name}
@@ -20,31 +20,31 @@ Source1:        create-tarball.sh
 BuildArch:      noarch
 
 BuildRequires:  %{?scl_prefix_java_common}maven-local >= 3.2.4-2
-BuildRequires:  maven30-maven-remote-resources-plugin
-BuildRequires:  maven30-munge-maven-plugin
-BuildRequires:  maven30-apache-resource-bundles
-BuildRequires:  maven30-aopalliance
+BuildRequires:  %{?scl_prefix}maven-remote-resources-plugin
+BuildRequires:  %{?scl_prefix}munge-maven-plugin
+BuildRequires:  %{?scl_prefix}apache-resource-bundles
+BuildRequires:  %{?scl_prefix}aopalliance
 BuildRequires:  %{?scl_prefix_java_common}atinject
-BuildRequires:  maven30-cglib
+BuildRequires:  %{?scl_prefix}cglib
 BuildRequires:  %{?scl_prefix_java_common}guava
 BuildRequires:  %{?scl_prefix_java_common}slf4j-api
 
 %if %{with extensions}
 buildrequires:  %{?scl_prefix}hibernate-jpa-2.0-api
-BuildRequires:  maven30-springframework-beans
+BuildRequires:  %{?scl_prefix}springframework-beans
 BuildRequires:  %{?scl_prefix_java_common}tomcat-servlet-3.0-api
 %endif
 
 # Test dependencies:
 %if 0
-BuildRequires:  maven30-maven-surefire-provider-testng
-BuildRequires:  maven30-aqute-bnd
+BuildRequires:  %{?scl_prefix}maven-surefire-provider-testng
+BuildRequires:  %{?scl_prefix}aqute-bnd
 BuildRequires:  %{?scl_prefix_java_common}atinject-tck
 BuildRequires:  %{?scl_prefix_java_common}easymock2
 BuildRequires:  %{?scl_prefix_java_common}felix-framework
-BuildRequires:  maven30-hibernate3-entitymanager
-BuildRequires:  maven30-mvn(org.hsqldb:hsqldb-j5)
-BuildRequires:  maven30-testng
+BuildRequires:  %{?scl_prefix}hibernate3-entitymanager
+BuildRequires:  %{?scl_prefix}mvn(org.hsqldb:hsqldb-j5)
+BuildRequires:  %{?scl_prefix}testng
 BuildRequires:  %{?scl_prefix_java_common}slf4j-simple
 %endif
 
@@ -158,7 +158,7 @@ This package provides %{summary}.
 
 %prep
 %setup -q -n %{pkg_name}-%{version}
-%{?scl:scl enable maven30 %{scl} - <<"EOF"}
+%{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 
 # We don't have struts2 in Fedora yet.
@@ -194,7 +194,7 @@ sed -i "/<addMavenDescriptor>/d" pom.xml
 
 
 %build
-%{?scl:scl enable maven30 %{scl} - <<"EOF"}
+%{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 %if %{with extensions}
 %mvn_alias ":guice-{assistedinject,grapher,jmx,jndi,multibindings,persist,\
@@ -211,7 +211,7 @@ servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
 %{?scl:EOF}
 
 %install
-%{?scl:scl enable maven30 %{scl} - <<"EOF"}
+%{?scl:scl enable %{scl} - <<"EOF"}
 set -e -x
 %mvn_install
 %{?scl:EOF}
@@ -241,6 +241,9 @@ set -e -x
 
 
 %changelog
+* Mon Jan 11 2016 Michal Srb <msrb@redhat.com> - 3.1.3-9.13
+- maven33 rebuild #2
+
 * Sat Jan 09 2016 Michal Srb <msrb@redhat.com> - 3.1.3-9.12
 - maven33 rebuild
 
