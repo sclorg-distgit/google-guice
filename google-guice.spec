@@ -9,7 +9,7 @@
 
 Name:           %{?scl_prefix}%{pkg_name}
 Version:        4.0
-Release:        2.1%{?dist}
+Release:        2.2%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/google/%{short_name}
@@ -214,6 +214,9 @@ sed -i '/<module>/s|extensions|&/servlet|' pom.xml
 %endif
 
 %mvn_package :jdk8-tests __noinstall
+
+# Don't generate auto-requires for optional dependencies
+sed -i "s|<optional>true</optional>|<scope>provided</scope>|" core/pom.xml
 %{?scl:EOF}
 
 %build
@@ -264,6 +267,9 @@ set -e -x
 
 
 %changelog
+* Mon Jan 18 2016 Michal Srb <msrb@redhat.com> - 4.0-2.2
+- Do not generate requires on optional dependencies
+
 * Tue Jan 12 2016 Mikolaj Izdebski <mizdebsk@redhat.com> - 4.0-2.1
 - SCL-ize package
 - Unconditionally enable servlet extension
