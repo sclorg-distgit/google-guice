@@ -9,7 +9,7 @@
 
 Name:           %{?scl_prefix}%{pkg_name}
 Version:        4.0
-Release:        2.2%{?dist}
+Release:        2.3%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/google/%{short_name}
@@ -31,7 +31,7 @@ BuildRequires:  %{?scl_prefix}maven-remote-resources-plugin
 BuildRequires:  %{?scl_prefix}munge-maven-plugin
 BuildRequires:  %{?scl_prefix}maven-gpg-plugin
 BuildRequires:  %{?scl_prefix}apache-resource-bundles
-BuildRequires:  %{?scl_prefix}aopalliance
+BuildRequires:  %{?scl_prefix_java_common}aopalliance
 BuildRequires:  %{?scl_prefix_java_common}atinject
 BuildRequires:  %{?scl_prefix_java_common}cglib
 BuildRequires:  %{?scl_prefix_java_common}guava
@@ -267,6 +267,9 @@ set -e -x
 
 
 %changelog
+* Mon Feb 08 2016 Michal Srb <msrb@redhat.com> - 4.0-2.3
+- BR aopalliance from rh-java-common SCL
+
 * Mon Jan 18 2016 Michal Srb <msrb@redhat.com> - 4.0-2.2
 - Do not generate requires on optional dependencies
 
