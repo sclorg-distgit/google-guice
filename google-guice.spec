@@ -9,7 +9,7 @@
 
 Name:           %{?scl_prefix}%{pkg_name}
 Version:        4.0
-Release:        2.3%{?dist}
+Release:        2.5%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/google/%{short_name}
@@ -26,7 +26,7 @@ Patch100:       https://raw.githubusercontent.com/sonatype/sisu-guice/master/PAT
 # Forwarded upstream: https://github.com/google/guice/issues/618
 Patch101:       https://raw.githubusercontent.com/sonatype/sisu-guice/master/PATCHES/GUICE_618_extensible_filter_pipeline.patch
 
-BuildRequires:  %{?scl_prefix_java_common}maven-local >= 3.2.4-2
+BuildRequires:  %{?scl_prefix}maven-local
 BuildRequires:  %{?scl_prefix}maven-remote-resources-plugin
 BuildRequires:  %{?scl_prefix}munge-maven-plugin
 BuildRequires:  %{?scl_prefix}maven-gpg-plugin
@@ -267,6 +267,12 @@ set -e -x
 
 
 %changelog
+* Thu Feb 11 2016 Michal Srb <msrb@redhat.com> - 4.0-2.5
+- Fix FTBFS
+
+* Mon Feb 08 2016 Michal Srb <msrb@redhat.com> - 4.0-2.4
+- Fix BR on maven-local & co.
+
 * Mon Feb 08 2016 Michal Srb <msrb@redhat.com> - 4.0-2.3
 - BR aopalliance from rh-java-common SCL
 
