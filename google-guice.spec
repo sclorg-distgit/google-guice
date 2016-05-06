@@ -9,7 +9,7 @@
 
 Name:           %{?scl_prefix}%{pkg_name}
 Version:        4.0
-Release:        2.5%{?dist}
+Release:        2.7%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/google/%{short_name}
@@ -240,9 +240,11 @@ set -e -x
 %{?scl:EOF}
 
 %files -f .mfiles-guice
+%dir %{_mavenpomdir}/guice
 %dir %{_javadir}/%{short_name}
 
 %files -n %{?scl_prefix}%{short_name}-parent -f .mfiles-guice-parent
+%dir %{_mavenpomdir}/guice
 %doc COPYING
 
 %files -n %{?scl_prefix}%{short_name}-servlet -f .mfiles-guice-servlet
@@ -267,6 +269,12 @@ set -e -x
 
 
 %changelog
+* Thu Apr 14 2016 Michal Srb <msrb@redhat.com> - 4.0-2.7
+- Really fix directory ownership (Resolves: rhbz#1325866)
+
+* Thu Apr 14 2016 Michal Srb <msrb@redhat.com> - 4.0-2.6
+- Fix directory ownership (Resolves: rhbz#1325866)
+
 * Thu Feb 11 2016 Michal Srb <msrb@redhat.com> - 4.0-2.5
 - Fix FTBFS
 
