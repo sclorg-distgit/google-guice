@@ -8,7 +8,7 @@
 
 Name:           %{?scl_prefix}google-%{short_name}
 Version:        4.1
-Release:        5.1%{?dist}
+Release:        5.2%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/google/%{short_name}
@@ -278,6 +278,9 @@ This package provides %{summary}.
 %doc COPYING
 
 %changelog
+* Thu Jun 22 2017 Michael Simacek <msimacek@redhat.com> - 4.1-5.2
+- Mass rebuild 2017-06-22
+
 * Wed Jun 21 2017 Java Maintainers <java-maint@redhat.com> - 4.1-5.1
 - Automated package import and SCL-ization
 
