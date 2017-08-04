@@ -8,7 +8,7 @@
 
 Name:           %{?scl_prefix}google-%{short_name}
 Version:        4.1
-Release:        5.2%{?dist}
+Release:        6.1%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 License:        ASL 2.0
 URL:            https://github.com/google/%{short_name}
@@ -17,13 +17,6 @@ BuildArch:      noarch
 # ./create-tarball.sh %%{version}
 Source0:        %{pkg_name}-%{version}.tar.xz
 Source1:        create-tarball.sh
-
-Patch0:         0001-Revert-Some-work-on-issue-910-ensure-that-anonymous-.patch
-
-# Rejected upstream: https://github.com/google/guice/issues/492
-Patch100:       https://raw.githubusercontent.com/sonatype/sisu-guice/master/PATCHES/GUICE_492_slf4j_logger_injection.patch
-# Forwarded upstream: https://github.com/google/guice/issues/618
-Patch101:       https://raw.githubusercontent.com/sonatype/sisu-guice/master/PATCHES/GUICE_618_extensible_filter_pipeline.patch
 
 BuildRequires:  %{?scl_prefix}maven-local
 BuildRequires:  %{?scl_prefix}mvn(aopalliance:aopalliance)
@@ -186,9 +179,6 @@ This package provides %{summary}.
 
 %prep
 %setup -q -n %{pkg_name}-%{version}
-#%patch0 -p1
-#%patch100 -p1
-#%patch101 -p1
 
 # We don't have struts2 in Fedora yet.
 %pom_disable_module struts2 extensions
@@ -278,6 +268,9 @@ This package provides %{summary}.
 %doc COPYING
 
 %changelog
+* Fri Jun 23 2017 Mikolaj Izdebski <mizdebsk@redhat.com> - 4.1-6.1
+- Remove unused patches
+
 * Thu Jun 22 2017 Michael Simacek <msimacek@redhat.com> - 4.1-5.2
 - Mass rebuild 2017-06-22
 
